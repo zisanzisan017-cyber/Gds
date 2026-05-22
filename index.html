@@ -1,280 +1,94 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amadeus Advance GDS Training Simulator</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Roboto Mono', monospace;
-            background: #0a0a0a;
-            color: #00ff9d;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .header {
-            background: #1a1a1a;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid #00ff9d;
-            font-size: 16px;
-        }
-        .container {
-            display: flex;
-            height: calc(100vh - 55px);
-        }
-        .sidebar {
-            width: 420px;
-            background: #111;
-            padding: 15px;
-            overflow-y: auto;
-            border-right: 3px solid #00ff9d;
-        }
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-        }
-        #output {
-            flex: 1;
-            background: #000;
-            padding: 15px;
-            overflow-y: auto;
-            border: 1px solid #00ff9d;
-            line-height: 1.65;
-            font-size: 15px;
-        }
-        .input-area {
-            background: #000;
-            border: 3px solid #00ff9d;
-            padding: 12px 15px;
-            margin-top: 8px;
-            font-size: 17px;
-        }
-        input {
-            width: 100%;
-            background: transparent;
-            border: none;
-            color: #00ff9d;
-            font-size: 17px;
-            outline: none;
-        }
-        button {
-            background: #00ff9d;
-            color: #000;
-            border: none;
-            padding: 8px 14px;
-            margin: 4px 3px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 13px;
-        }
-        .title { color: #00ffff; text-align: center; margin-bottom: 15px; }
-        .flight { background: #1a1a1a; padding: 10px; margin: 6px 0; border-left: 4px solid #00ffff; }
-        .ticket {
-            background: #fff;
-            color: #000;
-            padding: 25px;
-            margin: 15px;
-            border: 3px dashed #000;
-            display: none;
-            box-shadow: 0 0 20px rgba(0,255,157,0.6);
-        }
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; padding: 20px; }
+        #output { white-space: pre-wrap; height: 450px; overflow-y: auto; border: 1px solid #333; padding: 10px; margin-bottom: 10px; }
+        input { background: #000; color: #0f0; border: 1px solid #0f0; width: 100%; padding: 8px; outline: none; font-size: 16px; }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-    <div class="header">
-        <div>09:45</div>
-        <div><strong>Amadeus Advance GDS Training Simulator</strong></div>
-        <div>49% 🔋 LTE</div>
-    </div>
+    <div id="output">AMADEUS SYSTEM READY. TYPE COMMANDS...</div>
+    <input type="text" id="cmd" autofocus spellcheck="false" placeholder="Enter Command (e.g., AN 10JUN DACDXB)">
 
-    <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <h2 class="title">Training Manual</h2>
-            
-            <h3 style="color:#00ffff;">১. নিউ বুকিং চেইন</h3>
-            <ol style="margin-left:15px; line-height:1.8;">
-                <li><strong>AN DAC SYL 25MAY</strong> - ফ্লাইট সার্চ</li>
-                <li><strong>SS1Y1</strong> - সিট লক</li>
-                <li><strong>NM1AHMAD/MOBASSHIR MR</strong> - যাত্রীর নাম</li>
-                <li><strong>AP +8801712345678</strong> - মোবাইল</li>
-                <li><strong>FXP</strong> - ফাইনাল প্রাইস</li>
-                <li><strong>ER</strong> - PNR সেভ</li>
-                <li><strong>TTP</strong> - টিকেট ইস্যু</li>
-            </ol>
+<script>
+    // পিএনআর অবজেক্ট যেখানে ডাটা স্টোর হবে
+    let pnr = { flights: [], name: null, phone: null, email: null, docs: null, priced: false, saved: false, received: false };
+    const output = document.getElementById('output');
 
-            <h3 style="color:#00ffff; margin-top:20px;">২. অন্যান্য কমান্ড</h3>
-            <ul style="margin-left:15px; line-height:1.8;">
-                <li>IG — ইগনোর</li>
-                <li>RT — PNR রিট্রিভ</li>
-                <li>RF — রিসিভড আপডেট</li>
-                <li>FXQ — রিইস্যু পেনাল্টি</li>
-                <li>SRDOCS — পাসপোর্ট তথ্য</li>
-                <li>TRF — রিফান্ড</li>
-            </ul>
-        </div>
-
-        <!-- Main Terminal -->
-        <div class="main">
-            <div id="output">
-                <span style="color:#ff8800;">IR</span><br>
-                TRANSACTION IGNORED - CURRENT WORK AREA CLEARED<br><br>
-                <span style="color:#00ffff;">&gt; Amadeus Altéa GDS Simulator Ready for Training...</span><br><br>
-            </div>
-
-            <div class="input-area">
-                <span style="color:#00ff9d;">&gt;</span>
-                <input type="text" id="cmdInput" placeholder="কমান্ড লিখুন এবং Enter চাপুন..." autofocus>
-            </div>
-
-            <div style="margin-top:8px;">
-                <button onclick="quickCmd('AN DAC SYL 25MAY')">AN সার্চ</button>
-                <button onclick="quickCmd('SS1Y1')">SS1Y1</button>
-                <button onclick="quickCmd('FXP')">FXP</button>
-                <button onclick="quickCmd('ER')">ER</button>
-                <button onclick="quickCmd('TTP')">TTP ইস্যু</button>
-                <button onclick="quickCmd('IG')">IG</button>
-            </div>
-
-            <!-- Ticket -->
-            <div id="ticket" class="ticket">
-                <h2 style="text-align:center;">✈️ ELECTRONIC TICKET ✈️</h2>
-                <hr>
-                <p><strong>PNR :</strong> <span id="pnrDisplay">ABC9876</span></p>
-                <p><strong>নাম :</strong> Mobasshir Ahmad</p>
-                <p><strong>ফ্লাইট :</strong> BG 123 | DAC - SYL | 25 MAY 2026</p>
-                <p><strong>টিকেট নং :</strong> 123-4567890123</p>
-                <p><strong>মোট ভাড়া :</strong> BDT 19,470</p>
-                <div style="text-align:center; margin-top:20px;">
-                    <button onclick="printTicket()" style="padding:12px 30px; font-size:16px;">🖨️ প্রিন্ট করুন / PDF সেভ করুন</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let currentPNR = "";
-        let isBooked = false;
-        const output = document.getElementById('output');
-        const input = document.getElementById('cmdInput');
-
-        const airlines = ["BG","BS","QR","EK","MH","SQ","BA","AI","VJ","AK","GF","KU","RJ","TG","OD"];
-        const airports = ["DAC","SYL","CGP","SPD","JSR","DEL","BOM","CCU","DXB","DOH","RUH","KUL","SIN","LHR","JFK","IST"];
-
-        function addLine(text, color = "#00ff9d") {
-            const div = document.createElement('div');
-            div.style.color = color;
-            div.innerHTML = text;
-            output.appendChild(div);
-            output.scrollTop = output.scrollHeight;
+    document.getElementById('cmd').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            let val = this.value.toUpperCase();
+            processCommand(val);
+            this.value = '';
         }
+    });
 
-        function simulateAN() {
-            addLine("> AN DAC SYL 25MAY", "#ffff00");
-            addLine("** AVAILABILITY DISPLAY ** 25MAY 2026", "#00ffff");
-            
-            for (let i = 1; i <= 12; i++) {
-                const al = airlines[Math.floor(Math.random() * airlines.length)];
-                const num = Math.floor(100 + Math.random() * 900);
-                const dep = `\( {Math.floor(6 + Math.random() * 14)}: \){Math.floor(10 + Math.random() * 50)}`;
-                const arr = `\( {Math.floor(8 + Math.random() * 14)}: \){Math.floor(10 + Math.random() * 50)}`;
-                
-                const classes = `Y\( {Math.floor(5+Math.random()*5)} K \){Math.floor(4+Math.random()*5)} M${Math.floor(3+Math.random()*5)}`;
-                
-                addLine(`${i}. \( {al} \){num} \( {airports[0]}- \){airports[Math.floor(Math.random()*6)+1]} \( {dep}- \){arr} ${classes}`, "#00ffff");
+    function processCommand(cmd) {
+        let res = `\n> ${cmd}\n`;
+        
+        // কমান্ড লজিক
+        if (cmd.startsWith('AN')) {
+            res += "1. BG 024 Y 10JUN DAC-DXB 10:00\n2. US 125 Y 10JUN DAC-CGP 12:00\n3. EK 585 Y 10JUN DAC-DXB 14:00\n4. SQ 150 Y 10JUN DAC-SIN 16:00\n5. TG 320 Y 10JUN DAC-BKK 18:00";
+        } else if (cmd.startsWith('SS')) {
+            pnr.flights.push("BG 024 10JUN DAC-DXB");
+            res += "SS1Y1 - BOOKING CONFIRMED - HK1";
+        } else if (cmd.startsWith('NM')) {
+            pnr.name = cmd.substring(3);
+            res += `NAME ADDED: ${pnr.name}`;
+        } else if (cmd.startsWith('AP ')) {
+            pnr.phone = cmd.substring(3);
+            res += "PHONE CONTACT ADDED: " + pnr.phone;
+        } else if (cmd.startsWith('APE ')) {
+            pnr.email = cmd.substring(4);
+            res += "EMAIL ADDRESS ADDED: " + pnr.email;
+        } else if (cmd.startsWith('SR DOCS')) {
+            pnr.docs = "PASSPORT DATA SAVED";
+            res += "SSR DOCS RECEIVED - HK1";
+        } else if (cmd.startsWith('TKTL')) {
+            res += "TIME LIMIT SET: " + cmd.substring(5);
+        } else if (cmd === 'FXP') {
+            pnr.priced = true;
+            res += "FARE QUOTED: 25000 BDT. OK.";
+        } else if (cmd.startsWith('RF')) {
+            pnr.received = true;
+            res += "RECEIVED FROM: " + cmd.substring(3);
+        } else if (cmd === 'ER') {
+            pnr.saved = true;
+            res += "PNR SAVED. RECORD LOCATOR: XYZ123";
+        } else if (cmd === 'TMCASH') {
+            res += "PAYMENT MODE: CASH SELECTED.";
+        } else if (cmd === 'TTP') {
+            // টিকিট ইস্যুর আগে সব চেক
+            if (pnr.saved && pnr.priced && pnr.received) {
+                res += "TICKET ISSUED SUCCESSFULLY. E-TICKET: 998-1234567890";
+                generatePDF();
+            } else {
+                res += "ERROR: PNR NOT PRICED, SAVED OR RECEIVED FROM!";
             }
-            addLine("\n** আরো দেখতে: AN 13 **", "#aaa");
+        } else if (cmd === 'IG') {
+            pnr = { flights: [], name: null, phone: null, email: null, docs: null, priced: false, saved: false, received: false };
+            res += "SESSION IGNORED. DATA CLEARED.";
+        } else {
+            res += "INVALID COMMAND OR FORMAT.";
         }
+        output.innerHTML += res;
+        output.scrollTop = output.scrollHeight;
+    }
 
-        function processCommand(cmd) {
-            cmd = cmd.trim().toUpperCase();
-            addLine(`> ${cmd}`, "#ffff00");
-
-            if (cmd.startsWith("AN")) {
-                simulateAN();
-            } 
-            else if (cmd.startsWith("SS")) {
-                addLine("** SEAT CONFIRMED **", "#00ff00");
-                addLine("1 Seat(s) confirmed in requested class.", "#00ff00");
-            } 
-            else if (cmd.startsWith("NM")) {
-                addLine("** NAME ELEMENT ADDED **", "#00ff00");
-            } 
-            else if (cmd.startsWith("AP")) {
-                addLine("** CONTACT ELEMENT ADDED **", "#00ff00");
-            } 
-            else if (cmd === "FXP" || cmd === "FXD") {
-                addLine("** FARE QUOTE **", "#ffff00");
-                addLine("Base Fare : BDT 14850   Taxes : BDT 4620   Total : BDT 19470", "#ffff00");
-            } 
-            else if (cmd === "ER") {
-                currentPNR = "ABC" + Math.floor(1000 + Math.random() * 9000);
-                addLine(`** PNR CREATED : ${currentPNR} **`, "#00ff00");
-                isBooked = true;
-            } 
-            else if (cmd === "TTP") {
-                if (isBooked) {
-                    addLine("** TICKET ISSUED SUCCESSFULLY **", "#00ff00");
-                    document.getElementById('ticket').style.display = 'block';
-                    document.getElementById('pnrDisplay').textContent = currentPNR;
-                } else {
-                    addLine("** Error: PNR Not Created. First Use ER **", "#ff8800");
-                }
-            } 
-            else if (cmd === "IG") {
-                addLine("** TRANSACTION IGNORED **", "#ffaa00");
-                addLine("CURRENT WORK AREA CLEARED", "#ffaa00");
-                isBooked = false;
-            } 
-            else if (cmd === "RT") {
-                addLine(`** PNR RETRIEVED : ${currentPNR || "ABC4567"} **`, "#00ffff");
-            } 
-            else if (cmd.startsWith("SRDOCS")) {
-                addLine("** DOCS ELEMENT ADDED **", "#00ff00");
-            } 
-            else {
-                addLine("Command received and processed.", "#aaa");
-            }
-        }
-
-        input.addEventListener("keypress", function(e) {
-            if (e.key === "Enter") {
-                if (input.value.trim() !== "") {
-                    processCommand(input.value);
-                    input.value = "";
-                }
-            }
-        });
-
-        function quickCmd(cmd) {
-            processCommand(cmd);
-        }
-
-        function printTicket() {
-            const ticket = document.getElementById('ticket');
-            const printWin = window.open('', '_blank');
-            printWin.document.write(`
-                <html><head><title>Amadeus E-Ticket</title></head><body style="padding:30px;font-family:Arial;">
-                ${ticket.innerHTML}
-                <script>window.print(); setTimeout(() => window.close(), 800);<\/script>
-                </body></html>
-            `);
-            printWin.document.close();
-        }
-
-        // Initial Message
-        window.onload = () => {
-            addLine("✅ <strong>Welcome to Amadeus Altéa GDS Training Simulator</strong>", "#00ff00");
-            addLine("এখন পুরো বুকিং প্র্যাকটিস করুন। AN DAC SYL 25MAY দিয়ে শুরু করুন।", "#aaa");
-        };
-    </script>
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text("AMADEUS E-TICKET", 70, 20);
+        doc.text("-----------------------------", 70, 25);
+        doc.text("PASSENGER: " + pnr.name, 20, 40);
+        doc.text("FLIGHT: " + pnr.flights[0], 20, 50);
+        doc.text("PHONE: " + pnr.phone, 20, 60);
+        doc.text("EMAIL: " + pnr.email, 20, 70);
+        doc.text("STATUS: ISSUED | TICKET: 998-1234567890", 20, 90);
+        doc.save("ETICKET_XYZ123.pdf");
+    }
+</script>
 </body>
 </html>
