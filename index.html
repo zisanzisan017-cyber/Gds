@@ -3,35 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GDS Training Simulator - Amadeus Style</title>
+    <title>Amadeus GDS Training Simulator</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-    <div class="terminal-container">
-        <div class="terminal-header">
-            <div class="header-left">
-                <span class="title">AMADEUS GDS TRAINING SIMULATOR</span>
-                <span class="status">DAC1A0980 • TRAINING MODE</span>
-            </div>
-            <div class="header-right">
-                <span id="current-time"></span>
-            </div>
+    <div class="terminal">
+        <div class="header">
+            <span>AMADEUS GDS TRAINING SIMULATOR - DAC1A0980</span>
+            <button onclick="printTicket()" class="pdf-btn">Print e-Ticket PDF</button>
         </div>
         
-        <div id="terminal-output" class="terminal-output"></div>
+        <div id="output" class="output"></div>
         
-        <div class="terminal-input-area">
+        <div class="input-line">
             <span class="prompt">&gt;</span>
-            <input type="text" id="command-input" class="command-input" autocomplete="off" spellcheck="false">
-            <span class="cursor">█</span>
+            <input type="text" id="command-input" autocomplete="off" autofocus>
+            <span class="cursor">|</span>
         </div>
-    </div>
-
-    <div class="footer">
-        <button onclick="printTicket()" class="pdf-btn">🖨️ Print E-Ticket PDF</button>
-        <button onclick="clearTerminal()" class="clear-btn">Clear Screen</button>
-        <span class="help-text">Type HELP for commands • IG=Ignore • IR=Retrieve</span>
     </div>
 
     <script src="script.js"></script>
