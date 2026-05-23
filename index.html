@@ -3,35 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amadeus GDS Training Simulator</title>
+    <title>Sabre Terminal Simulator</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>AMADEUS GDS TRAINING SIMULATOR</h1>
-            <p>Realistic Airline Reservation System • Client-Side Only</p>
+            <h1>SABRE CRS SIMULATOR</h1>
+            <div class="status">
+                <span>AGENT: ZISAN</span>
+                <span>DATE: <span id="current-date"></span></span>
+                <span>SESSION: <span id="session-id">ACTIVE</span></span>
+            </div>
         </div>
         
         <div class="terminal">
-            <div class="terminal-header">
-                <span class="title">DAC1A0980 - AMADEUS TRAINING</span>
-                <span class="status">CONNECTED</span>
-            </div>
-            
             <div id="output" class="output"></div>
-            
             <div class="input-line">
                 <span class="prompt">&gt;</span>
-                <input type="text" id="command-input" autocomplete="off" autofocus>
-                <span class="cursor">_</span>
+                <input type="text" id="command-input" autofocus autocomplete="off">
             </div>
         </div>
-
-        <div class="footer">
-            <button onclick="printTicket()" class="pdf-btn">🖨️ Print E-Ticket (PDF)</button>
-            <span class="help">Type <strong>HELP</strong> for commands</span>
+        
+        <div class="controls">
+            <button onclick="clearScreen()">CLEAR</button>
+            <button onclick="saveSession()">SAVE SESSION</button>
+            <button onclick="loadSession()">LOAD SESSION</button>
+            <button onclick="printTicket()">PRINT TICKET PDF</button>
+            <button onclick="endSession()">END SESSION</button>
+        </div>
+        
+        <div class="info-panel">
+            <h3>Supported Commands</h3>
+            <div class="commands-grid">
+                <div>AN - Availability</div>
+                <div>SS - Sell Segment</div>
+                <div>NM - Name</div>
+                <div>AP - Phone</div>
+                <div>RF - Received From</div>
+                <div>RT - Retrieve PNR</div>
+                <div>XE - Cancel Segment</div>
+                <div>FQ/FXB - Fare</div>
+                <div>TTP - Ticket</div>
+            </div>
         </div>
     </div>
 
