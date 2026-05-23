@@ -1,94 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <style>
-        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; padding: 20px; }
-        #output { white-space: pre-wrap; height: 450px; overflow-y: auto; border: 1px solid #333; padding: 10px; margin-bottom: 10px; }
-        input { background: #000; color: #0f0; border: 1px solid #0f0; width: 100%; padding: 8px; outline: none; font-size: 16px; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDS Training Simulator - Amadeus Style</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-    <div id="output">AMADEUS SYSTEM READY. TYPE COMMANDS...</div>
-    <input type="text" id="cmd" autofocus spellcheck="false" placeholder="Enter Command (e.g., AN 10JUN DACDXB)">
-
-<script>
-    // পিএনআর অবজেক্ট যেখানে ডাটা স্টোর হবে
-    let pnr = { flights: [], name: null, phone: null, email: null, docs: null, priced: false, saved: false, received: false };
-    const output = document.getElementById('output');
-
-    document.getElementById('cmd').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            let val = this.value.toUpperCase();
-            processCommand(val);
-            this.value = '';
-        }
-    });
-
-    function processCommand(cmd) {
-        let res = `\n> ${cmd}\n`;
+    <div class="terminal">
+        <div class="terminal-header">
+            <div class="header-left">
+                <span class="title">AMADEUS GDS TRAINING SIMULATOR</span>
+                <span class="version">v1.0 • CLIENT-SIDE</span>
+            </div>
+            <div class="header-right">
+                <span id="current-time"></span>
+                <button onclick="printTicketPDF()" class="pdf-btn">📄 PRINT TICKET</button>
+            </div>
+        </div>
         
-        // কমান্ড লজিক
-        if (cmd.startsWith('AN')) {
-            res += "1. BG 024 Y 10JUN DAC-DXB 10:00\n2. US 125 Y 10JUN DAC-CGP 12:00\n3. EK 585 Y 10JUN DAC-DXB 14:00\n4. SQ 150 Y 10JUN DAC-SIN 16:00\n5. TG 320 Y 10JUN DAC-BKK 18:00";
-        } else if (cmd.startsWith('SS')) {
-            pnr.flights.push("BG 024 10JUN DAC-DXB");
-            res += "SS1Y1 - BOOKING CONFIRMED - HK1";
-        } else if (cmd.startsWith('NM')) {
-            pnr.name = cmd.substring(3);
-            res += `NAME ADDED: ${pnr.name}`;
-        } else if (cmd.startsWith('AP ')) {
-            pnr.phone = cmd.substring(3);
-            res += "PHONE CONTACT ADDED: " + pnr.phone;
-        } else if (cmd.startsWith('APE ')) {
-            pnr.email = cmd.substring(4);
-            res += "EMAIL ADDRESS ADDED: " + pnr.email;
-        } else if (cmd.startsWith('SR DOCS')) {
-            pnr.docs = "PASSPORT DATA SAVED";
-            res += "SSR DOCS RECEIVED - HK1";
-        } else if (cmd.startsWith('TKTL')) {
-            res += "TIME LIMIT SET: " + cmd.substring(5);
-        } else if (cmd === 'FXP') {
-            pnr.priced = true;
-            res += "FARE QUOTED: 25000 BDT. OK.";
-        } else if (cmd.startsWith('RF')) {
-            pnr.received = true;
-            res += "RECEIVED FROM: " + cmd.substring(3);
-        } else if (cmd === 'ER') {
-            pnr.saved = true;
-            res += "PNR SAVED. RECORD LOCATOR: XYZ123";
-        } else if (cmd === 'TMCASH') {
-            res += "PAYMENT MODE: CASH SELECTED.";
-        } else if (cmd === 'TTP') {
-            // টিকিট ইস্যুর আগে সব চেক
-            if (pnr.saved && pnr.priced && pnr.received) {
-                res += "TICKET ISSUED SUCCESSFULLY. E-TICKET: 998-1234567890";
-                generatePDF();
-            } else {
-                res += "ERROR: PNR NOT PRICED, SAVED OR RECEIVED FROM!";
-            }
-        } else if (cmd === 'IG') {
-            pnr = { flights: [], name: null, phone: null, email: null, docs: null, priced: false, saved: false, received: false };
-            res += "SESSION IGNORED. DATA CLEARED.";
-        } else {
-            res += "INVALID COMMAND OR FORMAT.";
-        }
-        output.innerHTML += res;
-        output.scrollTop = output.scrollHeight;
-    }
+        <div id="output" class="terminal-output"></div>
+        
+        <div class="terminal-input">
+            <span class="prompt">&gt;</span>
+            <input type="text" id="command-input" autocomplete="off" spellcheck="false">
+            <span class="cursor">█</span>
+        </div>
+    </div>
 
-    function generatePDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.text("AMADEUS E-TICKET", 70, 20);
-        doc.text("-----------------------------", 70, 25);
-        doc.text("PASSENGER: " + pnr.name, 20, 40);
-        doc.text("FLIGHT: " + pnr.flights[0], 20, 50);
-        doc.text("PHONE: " + pnr.phone, 20, 60);
-        doc.text("EMAIL: " + pnr.email, 20, 70);
-        doc.text("STATUS: ISSUED | TICKET: 998-1234567890", 20, 90);
-        doc.save("ETICKET_XYZ123.pdf");
-    }
-</script>
+    <script src="script.js"></script>
 </body>
 </html>
