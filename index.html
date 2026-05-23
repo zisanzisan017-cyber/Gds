@@ -3,50 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sabre Terminal Simulator</title>
+    <title>AMADEUS Airline Reservation Terminal</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>SABRE CRS SIMULATOR</h1>
-            <div class="status">
-                <span>AGENT: ZISAN</span>
-                <span>DATE: <span id="current-date"></span></span>
-                <span>SESSION: <span id="session-id">ACTIVE</span></span>
-            </div>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <span class="header-title">AMADEUS RESERVATION SYSTEM v4.2.1</span>
+            <span class="header-status" id="sessionStatus">SESSION: ACTIVE</span>
         </div>
         
-        <div class="terminal">
-            <div id="output" class="output"></div>
-            <div class="input-line">
-                <span class="prompt">&gt;</span>
-                <input type="text" id="command-input" autofocus autocomplete="off">
+        <div class="terminal-output" id="terminal">
+            <div class="terminal-line">
+                <span class="prompt">></span>
+                <span class="text">AMADEUS AIRLINE RESERVATION SYSTEM</span>
+            </div>
+            <div class="terminal-line">
+                <span class="text">Copyright (c) 1987-2026 Amadeus IT Group SA</span>
+            </div>
+            <div class="terminal-line">
+                <span class="text">All rights reserved.</span>
+            </div>
+            <div class="terminal-line">
+                <span class="text"></span>
+            </div>
+            <div class="terminal-line">
+                <span class="text">Type HELP for command reference.</span>
+            </div>
+            <div class="terminal-line">
+                <span class="text"></span>
             </div>
         </div>
-        
-        <div class="controls">
-            <button onclick="clearScreen()">CLEAR</button>
-            <button onclick="saveSession()">SAVE SESSION</button>
-            <button onclick="loadSession()">LOAD SESSION</button>
-            <button onclick="printTicket()">PRINT TICKET PDF</button>
-            <button onclick="endSession()">END SESSION</button>
+
+        <div class="input-container">
+            <span class="prompt">&gt;</span>
+            <input 
+                type="text" 
+                id="commandInput" 
+                class="command-input"
+                autocomplete="off"
+                spellcheck="false"
+            >
         </div>
-        
-        <div class="info-panel">
-            <h3>Supported Commands</h3>
-            <div class="commands-grid">
-                <div>AN - Availability</div>
-                <div>SS - Sell Segment</div>
-                <div>NM - Name</div>
-                <div>AP - Phone</div>
-                <div>RF - Received From</div>
-                <div>RT - Retrieve PNR</div>
-                <div>XE - Cancel Segment</div>
-                <div>FQ/FXB - Fare</div>
-                <div>TTP - Ticket</div>
-            </div>
+
+        <div class="terminal-footer">
+            <span>F1: HELP | F2: PNR | F3: FARE | F4: TICKET | ALT+X: EXIT</span>
         </div>
     </div>
 
