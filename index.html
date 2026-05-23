@@ -8,18 +8,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-    <div class="terminal">
+    <div class="container">
         <div class="header">
-            <span>AMADEUS GDS TRAINING SIMULATOR - DAC1A0980</span>
-            <button onclick="printTicket()" class="pdf-btn">Print e-Ticket PDF</button>
+            <h1>AMADEUS GDS TRAINING SIMULATOR</h1>
+            <p>Realistic Airline Reservation System • Client-Side Only</p>
         </div>
         
-        <div id="output" class="output"></div>
-        
-        <div class="input-line">
-            <span class="prompt">&gt;</span>
-            <input type="text" id="command-input" autocomplete="off" autofocus>
-            <span class="cursor">|</span>
+        <div class="terminal">
+            <div class="terminal-header">
+                <span class="title">DAC1A0980 - AMADEUS TRAINING</span>
+                <span class="status">CONNECTED</span>
+            </div>
+            
+            <div id="output" class="output"></div>
+            
+            <div class="input-line">
+                <span class="prompt">&gt;</span>
+                <input type="text" id="command-input" autocomplete="off" autofocus>
+                <span class="cursor">_</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <button onclick="printTicket()" class="pdf-btn">🖨️ Print E-Ticket (PDF)</button>
+            <span class="help">Type <strong>HELP</strong> for commands</span>
         </div>
     </div>
 
