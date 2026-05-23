@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMADEUS Airline Reservation Terminal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <span class="header-title">AMADEUS RESERVATION SYSTEM v4.2.1</span>
+            <span class="header-status" id="sessionStatus">SESSION: ACTIVE</span>
+        </div>
+        
+        <div class="terminal-output" id="terminal">
+            <div class="terminal-line">
+                <span class="prompt">></span>
+                <span class="text">AMADEUS AIRLINE RESERVATION SYSTEM</span>
+            </div>
+            <div class="terminal-line">
+                <span class="text">Copyright (c) 1987-2026 Amadeus IT Group SA</span>
+            </div>
+            <div class="terminal-line">
+                <span class="text">All rights reserved.</span>
+            </div>
+            <div class="terminal-line">
+                <span class="text"></span>
+            </div>
+            <div class="terminal-line">
+                <span class="text">Type HELP for command reference.</span>
+            </div>
+            <div class="terminal-line">
+                <span class="text"></span>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <span class="prompt">&gt;</span>
+            <input 
+                type="text" 
+                id="commandInput" 
+                class="command-input"
+                autocomplete="off"
+                spellcheck="false"
+            >
+        </div>
+
+        <div class="terminal-footer">
+            <span>F1: HELP | F2: PNR | F3: FARE | F4: TICKET | ALT+X: EXIT</span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
