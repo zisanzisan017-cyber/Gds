@@ -1,405 +1,412 @@
-// script.js
-// ==================== GDS TRAINING SIMULATOR ====================
+// =============================================
+// GDS Training Simulator - Amadeus Style
+// Complete Client-Side Vanilla JS
+// =============================================
 
-// ====================== DATABASE ======================
+let commandHistory = [];
+let historyIndex = -1;
+let activePNR = null;
+let lastAvailability = null;
+let sessionState = {};
+
+// Database
 const airports = {
-    "DAC": "Dhaka, Bangladesh",
-    "BKK": "Bangkok, Thailand",
-    "DEL": "Delhi, India",
-    "DXB": "Dubai, UAE",
-    "LHR": "London, UK",
-    "JFK": "New York, USA",
-    "SIN": "Singapore",
-    "KUL": "Kuala Lumpur, Malaysia",
-    "CGK": "Jakarta, Indonesia",
-    "HKG": "Hong Kong",
-    "ICN": "Seoul, South Korea",
-    "NRT": "Tokyo, Japan",
-    "SYD": "Sydney, Australia",
-    "MCT": "Muscat, Oman",
-    "RUH": "Riyadh, Saudi Arabia"
+    'DAC': 'Dhaka', 'BKK': 'Bangkok', 'DXB': 'Dubai', 'SIN': 'Singapore',
+    'DEL': 'Delhi', 'LHR': 'London', 'JFK': 'New York', 'CGK': 'Jakarta',
+    'KUL': 'Kuala Lumpur', 'HKG': 'Hong Kong', 'BOM': 'Mumbai', 'MCT': 'Muscat'
 };
 
 const airlines = {
-    "BG": "Biman Bangladesh Airlines",
-    "QR": "Qatar Airways",
-    "EK": "Emirates",
-    "SQ": "Singapore Airlines",
-    "AI": "Air India",
-    "MH": "Malaysia Airlines",
-    "TG": "Thai Airways",
-    "JL": "Japan Airlines"
+    'BG': 'Biman Bangladesh', 'TG': 'Thai Airways', 'EK': 'Emirates',
+    'SQ': 'Singapore Airlines', 'AI': 'Air India', 'BA': 'British Airways',
+    'QR': 'Qatar Airways', 'MH': 'Malaysia Airlines'
 };
 
 const sampleFlights = [
-    { id: 1, airline: "BG", flightNo: "147", from: "DAC", to: "BKK", dep: "23:45", arr: "05:30", duration: "4h45m", price: 285 },
-    { id: 2, airline: "QR", flightNo: "638", from: "DAC", to: "BKK", dep: "08:15", arr: "14:05", duration: "4h50m", price: 320 },
-    { id: 3, airline: "TG", flightNo: "321", from: "DAC", to: "BKK", dep: "10:30", arr: "16:20", duration: "4h50m", price: 310 },
-    { id: 4, airline: "BG", flightNo: "148", from: "BKK", to: "DAC", dep: "07:00", arr: "09:10", duration: "3h10m", price: 260 },
+    { id: 1, airline: 'BG', flight: '388', dep: 'DAC', arr: 'BKK', depTime: '1030', arrTime: '1430', aircraft: '738', classes: { Y:9, B:9, M:8, H:7, K:5 } },
+    { id: 2, airline: 'BG', flight: '390', dep: 'DAC', arr: 'BKK', depTime: '1800', arrTime: '2130', aircraft: '738', classes: { Y:9, B:8, M:7, H:6, K:4 } },
+    { id: 3, airline: 'TG', flight: '321', dep: 'DAC', arr: 'BKK', depTime: '0850', arrTime: '1230', aircraft: '333', classes: { Y:12, B:10, M:9, H:8 } },
+    { id: 4, airline: 'EK', flight: '584', dep: 'DAC', arr: 'DXB', depTime: '2200', arrTime: '0130', aircraft: '77W', classes: { Y:15, B:12, M:10, H:8 } },
+    { id: 5, airline: 'SQ', flight: '446', dep: 'DAC', arr: 'SIN', depTime: '0130', arrTime: '0730', aircraft: '77W', classes: { Y:9, B:8, M:7 } },
 ];
 
-// ====================== STATE ======================
-let currentPNR = {
-    locator: "",
-    passengers: [],
-    segments: [],
-    contact: "",
-    tkTime: "",
-    ticketNumber: "",
-    status: "OPEN",
-    fare: 0
-};
-
-let sessionHistory = [];
-
-// ====================== UTILITIES ======================
-function generatePNR() {
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    let pnr = "";
-    for (let i = 0; i < 6; i++) {
-        pnr += letters[Math.floor(Math.random() * 26)];
+// State
+function initState() {
+    if (!localStorage.getItem('gdsSimulator')) {
+        localStorage.setItem('gdsSimulator', JSON.stringify({
+            pnr: null,
+            history: []
+        }));
     }
-    return pnr;
+    const saved = JSON.parse(localStorage.getItem('gdsSimulator'));
+    activePNR = saved.pnr;
 }
 
-function getCurrentTime() {
-    const now = new Date();
-    return now.toLocaleTimeString('en-US', { hour12: false });
-}
+// Terminal functions
+const terminal = document.getElementById('terminal-output');
+const input = document.getElementById('command-input');
 
-function updateClock() {
-    document.getElementById('current-time').textContent = getCurrentTime();
-}
-
-// ====================== LOCALSTORAGE ======================
-function saveToLocalStorage() {
-    localStorage.setItem('gds_pnr', JSON.stringify(currentPNR));
-}
-
-function loadFromLocalStorage() {
-    const saved = localStorage.getItem('gds_pnr');
-    if (saved) {
-        currentPNR = JSON.parse(saved);
-        if (!currentPNR.locator) currentPNR.locator = generatePNR();
-    } else {
-        currentPNR.locator = generatePNR();
-    }
-}
-
-// ====================== TERMINAL RENDERING ======================
-const output = document.getElementById('output');
-const inputField = document.getElementById('command-input');
-
-function printLine(text, className = '') {
+function printLine(text, color = '#00ff00') {
     const line = document.createElement('div');
-    line.className = `output-line ${className}`;
+    line.style.color = color;
     line.textContent = text;
-    output.appendChild(line);
-    output.scrollTop = output.scrollHeight;
+    terminal.appendChild(line);
+    terminal.scrollTop = terminal.scrollHeight;
+}
+
+function printHeader(text) {
+    printLine('='.repeat(60), '#00ff88');
+    printLine(text, '#ffff00');
+    printLine('='.repeat(60), '#00ff88');
 }
 
 function clearTerminal() {
-    output.innerHTML = '';
+    terminal.innerHTML = '';
+    printLine('GDS TRAINING SIMULATOR v1.0 - TRAINING ENVIRONMENT', '#88ff88');
+    printLine('Type HELP for available commands.', '#66ff66');
 }
 
-// ====================== COMMAND PARSER ======================
-function parseCommand(cmd) {
-    cmd = cmd.trim().toUpperCase();
-    if (!cmd) return;
+// Command Parser
+function parseAN(command) {
+    const match = command.match(/^AN(\d{2})([A-Z]{3})(\d{2})([A-Z]{3})(?:\/([A-Z]{2}))?$/i);
+    if (!match) return null;
 
-    printLine(`> ${cmd}`, 'info');
-
-    const parts = cmd.split(' ');
-    const command = parts[0];
-
-    switch (command) {
-        case 'AN':
-            handleAN(cmd);
-            break;
-        case 'NM':
-            handleNM(cmd);
-            break;
-        case 'AP':
-            handleAP(cmd);
-            break;
-        case 'TK':
-            handleTK(cmd);
-            break;
-        case 'SS':
-            handleSS(cmd);
-            break;
-        case 'XE':
-            handleXE(cmd);
-            break;
-        case 'RT':
-            handleRT(cmd);
-            break;
-        case 'RF':
-            handleRF(cmd);
-            break;
-        case 'TTP':
-            handleTTP();
-            break;
-        case 'IG':
-            handleIG();
-            break;
-        case 'IR':
-            handleIR();
-            break;
-        case 'FQ':
-        case 'FXD':
-        case 'FXB':
-        case 'FXX':
-        case 'FXR':
-            handleFareCommand(cmd);
-            break;
-        default:
-            if (cmd.startsWith('SSR') || cmd.startsWith('OSI') || cmd.startsWith('RM') || cmd.startsWith('NIP')) {
-                printLine('COMMAND PROCESSED (SIMULATED)', 'success');
-            } else {
-                printLine('NOT RECOGNIZED OR INVALID FORMAT', 'error');
-            }
-    }
-}
-
-// ====================== COMMAND HANDLERS ======================
-function handleAN(cmd) {
-    printLine('*** AVAILABILITY DISPLAY ***', 'success');
+    const [, day, month, , dest, airlineFilter] = match;
+    const dateStr = `${day}${month.toUpperCase()}`;
     
-    let date = "15JUN";
-    let from = "DAC";
-    let to = "BKK";
-    
-    const match = cmd.match(/AN(\d{2}[A-Z]{3})([A-Z]{3})([A-Z]{3})/);
-    if (match) {
-        date = match[1];
-        from = match[2];
-        to = match[3];
+    // Validate airports
+    const origin = 'DAC'; // Default for training
+    if (!airports[origin] || !airports[dest]) {
+        return { error: 'CITY/AIRPORT CODE NOT FOUND' };
     }
     
-    printLine(`FROM ${from} TO ${to} ON ${date}`, 'info');
-    
-    sampleFlights.forEach((flight, i) => {
-        if (flight.from === from && flight.to === to) {
-            printLine(`${i+1} ${flight.airline}${flight.flightNo} ${flight.dep}-${flight.arr} ${flight.duration} ${flight.price}USD Y`, 'flight-line');
-        }
-    });
-    
-    printLine('*** END OF AVAILABILITY ***');
-}
-
-function handleNM(cmd) {
-    const match = cmd.match(/NM(\d+)(.+)/);
-    if (match) {
-        const count = parseInt(match[1]);
-        let name = match[2].trim();
-        currentPNR.passengers.push({ name: name, type: "ADT" });
-        printLine(`PASSENGER ADDED: ${name}`, 'success');
-        saveToLocalStorage();
-    } else {
-        printLine('INVALID NAME FORMAT', 'error');
+    if (airlineFilter && !airlines[airlineFilter]) {
+        return { error: 'AIRLINE CODE NOT FOUND' };
     }
+
+    return {
+        date: dateStr,
+        origin,
+        dest,
+        airlineFilter: airlineFilter ? airlineFilter.toUpperCase() : null
+    };
 }
 
-function handleAP(cmd) {
-    currentPNR.contact = cmd.substring(2);
-    printLine('CONTACT INFORMATION STORED', 'success');
-    saveToLocalStorage();
-}
+// Availability Engine
+function showAvailability(parsed) {
+    lastAvailability = [];
+    printHeader(`AN${parsed.date}${parsed.origin}${parsed.dest}${parsed.airlineFilter ? '/' + parsed.airlineFilter : ''}`);
+    
+    let results = sampleFlights.filter(f => 
+        f.dep === parsed.origin && 
+        f.arr === parsed.dest &&
+        (!parsed.airlineFilter || f.airline === parsed.airlineFilter)
+    );
 
-function handleTK(cmd) {
-    currentPNR.tkTime = cmd.substring(2);
-    printLine(`TICKETING TIME LIMIT SET: ${currentPNR.tkTime}`, 'success');
-    saveToLocalStorage();
-}
+    if (results.length === 0) {
+        printLine('NO FLIGHTS AVAILABLE', '#ff6666');
+        return;
+    }
 
-function handleSS(cmd) {
-    const match = cmd.match(/SS(\d)([A-Z])(\d)/);
-    if (match) {
-        const qty = parseInt(match[1]);
-        const cabin = match[2];
+    results.forEach((flight, index) => {
+        lastAvailability.push(flight);
+        let classStr = Object.entries(flight.classes)
+            .map(([cls, seats]) => `${cls}${seats}`).join(' ');
         
-        if (sampleFlights.length > 0) {
-            const flight = sampleFlights[0];
-            currentPNR.segments.push({
-                airline: flight.airline,
-                flightNo: flight.flightNo,
-                from: flight.from,
-                to: flight.to,
-                dep: flight.dep,
-                arr: flight.arr,
-                cabin: cabin,
-                status: "HK"
-            });
-            printLine(`SEGMENT SOLD: ${flight.airline}${flight.flightNo} ${flight.from}-${flight.to}`, 'success');
-            saveToLocalStorage();
+        const line = `${(index+1).toString().padStart(2)} ${flight.airline}${flight.flight.padEnd(4)} ${classStr.padEnd(25)} ${flight.dep}${flight.arr} ${flight.depTime} ${flight.arrTime} ${flight.aircraft}`;
+        printLine(line);
+    });
+    
+    printLine('');
+    printLine('** AVAILABILITY DISPLAYED **', '#ffff00');
+}
+
+// SS Command - Sell Segment
+function sellSegment(cmd) {
+    if (!lastAvailability || lastAvailability.length === 0) {
+        printLine('NO AVAILABILITY TO SELL FROM. DO AN FIRST.', '#ff6666');
+        return;
+    }
+
+    const match = cmd.match(/^SS(\d)([A-Z])(\d?)/i);
+    if (!match) {
+        printLine('INVALID SS FORMAT. USE: SS1Y1', '#ff6666');
+        return;
+    }
+
+    const [, lineNum, bookingClass, paxCount] = match;
+    const idx = parseInt(lineNum) - 1;
+    const numPax = parseInt(paxCount) || 1;
+
+    if (idx < 0 || idx >= lastAvailability.length) {
+        printLine('SEGMENT NOT FOUND', '#ff6666');
+        return;
+    }
+
+    const flight = lastAvailability[idx];
+    if (!flight.classes[bookingClass]) {
+        printLine(`CLASS ${bookingClass} NOT AVAILABLE`, '#ff6666');
+        return;
+    }
+
+    if (flight.classes[bookingClass] < numPax) {
+        printLine('INSUFFICIENT SEATS', '#ff6666');
+        return;
+    }
+
+    // Reduce seats
+    flight.classes[bookingClass] -= numPax;
+
+    // Create PNR if not exists
+    if (!activePNR) {
+        activePNR = {
+            recordLocator: generateRecordLocator(),
+            passengers: [],
+            itinerary: [],
+            fare: 450,
+            status: 'HK'
+        };
+    }
+
+    activePNR.itinerary.push({
+        ...flight,
+        bookingClass,
+        pax: numPax,
+        status: 'HK'
+    });
+
+    printLine(`SS${lineNum}${bookingClass}${numPax} - SEGMENT ADDED TO PNR`, '#00ff88');
+    saveState();
+}
+
+// Generate Record Locator
+function generateRecordLocator() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let loc = '';
+    for (let i = 0; i < 6; i++) {
+        loc += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return loc;
+}
+
+// PNR Display
+function showPNR() {
+    if (!activePNR) {
+        printLine('NO ACTIVE PNR', '#ff6666');
+        return;
+    }
+
+    printHeader(`RP/DAC1A0980/DAC1A0980 AA/SU ${new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'2-digit'}).replace(' ', '')}/1200Z`);
+
+    printLine(`1.${activePNR.passengers.length > 0 ? activePNR.passengers[0].name : 'RAHIM/MR'}`);
+    
+    activePNR.itinerary.forEach((seg, i) => {
+        printLine(`${i+1}. ${seg.airline}${seg.flight} ${seg.bookingClass} ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} ${seg.dep}${seg.arr} HK${seg.pax} ${seg.depTime} ${seg.arrTime}`);
+    });
+
+    printLine('AP 017XXXXXXXX');
+    printLine(`RF ${activePNR.passengers.length > 0 ? activePNR.passengers[0].name.split('/')[0] : 'RAHIM'}`);
+    printLine('');
+    printLine(`FARE: USD ${activePNR.fare}   PNR: ${activePNR.recordLocator}`, '#ffff00');
+}
+
+// NM - Name
+function addPassenger(name) {
+    if (!activePNR) activePNR = { recordLocator: generateRecordLocator(), passengers: [], itinerary: [], fare: 450, status: 'HK' };
+    
+    activePNR.passengers.push({ name: name.toUpperCase() });
+    printLine(`NM ${name} - PASSENGER ADDED`, '#00ff88');
+    saveState();
+}
+
+// Other Commands
+function handleCommand(cmd) {
+    const upperCmd = cmd.trim().toUpperCase();
+    
+    if (upperCmd === '') return;
+    
+    printLine(`> ${upperCmd}`, '#88ff88');
+    
+    // Availability
+    if (upperCmd.startsWith('AN')) {
+        const parsed = parseAN(upperCmd);
+        if (parsed && parsed.error) {
+            printLine(parsed.error, '#ff6666');
+        } else if (parsed) {
+            showAvailability(parsed);
+        } else {
+            printLine('INVALID FORMAT. EXAMPLE: AN10JUNDACBKK', '#ff6666');
         }
     }
-}
-
-function handleXE(cmd) {
-    const num = parseInt(cmd.substring(2));
-    if (num > 0 && num <= currentPNR.segments.length) {
-        currentPNR.segments.splice(num-1, 1);
-        printLine(`SEGMENT ${num} DELETED`, 'success');
-        saveToLocalStorage();
-    } else {
-        printLine('INVALID SEGMENT NUMBER', 'error');
+    
+    // Sell Segment
+    else if (upperCmd.startsWith('SS')) {
+        sellSegment(upperCmd);
     }
-}
-
-function handleRT(cmd) {
-    printLine(`*** PNR DISPLAY - ${currentPNR.locator} ***`, 'success');
-    printLine(`PASSENGERS:`, 'info');
-    currentPNR.passengers.forEach((p, i) => {
-        printLine(`  ${i+1}. ${p.name}`);
-    });
     
-    printLine(`ITINERARY:`, 'info');
-    currentPNR.segments.forEach((seg, i) => {
-        printLine(`  ${i+1}. ${seg.airline}${seg.flightNo} ${seg.from}-${seg.to} ${seg.dep}-${seg.arr}`);
-    });
+    // Retrieve PNR
+    else if (upperCmd === 'RT') {
+        showPNR();
+    }
     
-    printLine(`CONTACT: ${currentPNR.contact || 'NOT SET'}`);
-    printLine(`STATUS: ${currentPNR.status}`);
+    // Name
+    else if (upperCmd.startsWith('NM')) {
+        const name = upperCmd.substring(2).trim();
+        if (name) addPassenger(name);
+        else printLine('INVALID NAME FORMAT', '#ff6666');
+    }
+    
+    // Help
+    else if (upperCmd === 'HELP') {
+        printLine('AVAILABLE COMMANDS:');
+        printLine('AN10JUNDACBKK     - Availability');
+        printLine('SS1Y1             - Sell Y class from line 1');
+        printLine('NMRAHIM/MR        - Add passenger');
+        printLine('RT                - Display PNR');
+        printLine('IG                - Ignore changes');
+        printLine('IR                - Retrieve PNR');
+        printLine('TTP               - Ticket PNR');
+    }
+    
+    // IG - Ignore
+    else if (upperCmd === 'IG') {
+        printLine('IGNORING CHANGES - RESTORING PREVIOUS STATE', '#ffff00');
+        activePNR = null;
+        lastAvailability = null;
+    }
+    
+    // IR - Retrieve
+    else if (upperCmd === 'IR') {
+        printLine('RETRIEVING SAVED PNR...', '#00ff88');
+        const saved = JSON.parse(localStorage.getItem('gdsSimulator'));
+        if (saved && saved.pnr) {
+            activePNR = saved.pnr;
+            showPNR();
+        } else {
+            printLine('NO SAVED PNR FOUND', '#ff6666');
+        }
+    }
+    
+    // TTP - Ticket
+    else if (upperCmd === 'TTP') {
+        if (!activePNR || activePNR.itinerary.length === 0) {
+            printLine('NO ITINERARY TO TICKET', '#ff6666');
+        } else {
+            activePNR.ticketed = true;
+            activePNR.ticketNumber = '125-' + Math.floor(100000000 + Math.random() * 900000000);
+            printLine(`TICKET ISSUED: ${activePNR.ticketNumber}`, '#00ff88');
+            saveState();
+        }
+    }
+    
+    else {
+        printLine('COMMAND NOT RECOGNIZED', '#ff6666');
+    }
+    
+    commandHistory.unshift(upperCmd);
+    historyIndex = -1;
 }
 
-function handleRF(cmd) {
-    printLine(`RECEIVED FROM: ${cmd.substring(3)}`, 'success');
+// Save to localStorage
+function saveState() {
+    localStorage.setItem('gdsSimulator', JSON.stringify({
+        pnr: activePNR,
+        history: commandHistory.slice(0, 50)
+    }));
 }
 
-function handleTTP() {
-    if (currentPNR.segments.length === 0 || currentPNR.passengers.length === 0) {
-        printLine('CANNOT TICKET - INCOMPLETE PNR', 'error');
+// PDF Ticket Generator
+function printTicket() {
+    if (!activePNR || !activePNR.ticketed) {
+        alert("Please ticket the PNR first with TTP command.");
         return;
     }
-    
-    currentPNR.ticketNumber = "125-" + Math.floor(10000000 + Math.random() * 90000000);
-    currentPNR.status = "TICKETED";
-    currentPNR.fare = currentPNR.segments.length * 320;
-    
-    printLine('*** TICKET ISSUED SUCCESSFULLY ***', 'success');
-    printLine(`TICKET NUMBER: ${currentPNR.ticketNumber}`);
-    printLine(`TOTAL FARE: USD ${currentPNR.fare}`);
-    saveToLocalStorage();
-}
 
-function handleIG() {
-    printLine('IGNORING CHANGES - RETURNING TO LAST SAVED STATE', 'info');
-    loadFromLocalStorage();
-    printLine('SESSION RESET TO SAVED PNR', 'success');
-}
-
-function handleIR() {
-    printLine('RETRIEVING LAST SAVED PNR...', 'info');
-    loadFromLocalStorage();
-    printLine(`PNR ${currentPNR.locator} RETRIEVED`, 'success');
-}
-
-function handleFareCommand(cmd) {
-    printLine('*** FARE QUOTE DISPLAY ***', 'success');
-    printLine('BASE FARE: 285.00 USD', 'info');
-    printLine('TAXES: 45.50 USD', 'info');
-    printLine('TOTAL: 330.50 USD', 'success');
-}
-
-// ====================== PDF GENERATOR ======================
-function printTicketPDF() {
-    if (!currentPNR.ticketNumber) {
-        alert("No ticket issued yet. Use TTP command first.");
-        return;
-    }
-    
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
     doc.setFont("courier");
     doc.setFontSize(16);
-    doc.text("ELECTRONIC TICKET - IATA", 105, 20, { align: "center" });
+    doc.text("ELECTRONIC TICKET", 105, 20, { align: "center" });
     
-    doc.setFontSize(12);
-    doc.text(`PNR: ${currentPNR.locator}`, 20, 40);
-    doc.text(`TICKET: ${currentPNR.ticketNumber}`, 20, 50);
+    doc.setFontSize(11);
+    doc.text(`PNR: ${activePNR.recordLocator}`, 20, 40);
+    doc.text(`TICKET #: ${activePNR.ticketNumber}`, 20, 48);
+    doc.text(`ISSUE DATE: ${new Date().toLocaleDateString()}`, 20, 56);
     
-    doc.text("PASSENGER:", 20, 70);
-    currentPNR.passengers.forEach((p, i) => {
-        doc.text(`${i+1}. ${p.name}`, 20, 80 + i*10);
+    if (activePNR.passengers.length > 0) {
+        doc.text(`PASSENGER: ${activePNR.passengers[0].name}`, 20, 70);
+    }
+    
+    doc.text("ITINERARY:", 20, 85);
+    
+    let y = 95;
+    activePNR.itinerary.forEach((seg, i) => {
+        doc.text(`${i+1}. ${seg.airline}${seg.flight}  ${seg.dep}-${seg.arr}  ${seg.depTime}-${seg.arrTime}  ${seg.bookingClass}`, 25, y);
+        y += 10;
     });
     
-    doc.text("ITINERARY:", 20, 110);
-    currentPNR.segments.forEach((seg, i) => {
-        doc.text(`${seg.airline}${seg.flightNo}  ${seg.from} - ${seg.to}  ${seg.dep}`, 20, 120 + i*10);
-    });
+    doc.text(`TOTAL FARE: USD ${activePNR.fare}`, 20, y + 15);
+    doc.text("Thank you for flying with us!", 105, y + 35, { align: "center" });
     
-    doc.text(`TOTAL FARE: USD ${currentPNR.fare}`, 20, 170);
-    doc.text(`ISSUE DATE: ${new Date().toLocaleDateString()}`, 20, 180);
-    
-    doc.setFontSize(10);
-    doc.text("This is a simulated training ticket.", 105, 270, { align: "center" });
-    
-    doc.save(`TICKET_${currentPNR.locator}.pdf`);
+    doc.save(`ETicket_${activePNR.recordLocator}.pdf`);
 }
 
-// ====================== INITIALIZATION ======================
-function initTerminal() {
-    clearTerminal();
-    printLine("========================================", 'success');
-    printLine("     AMADEUS GDS TRAINING SIMULATOR", 'success');
-    printLine("     CLIENT-SIDE • FULLY FUNCTIONAL", 'success');
-    printLine("========================================", 'success');
-    printLine("");
-    printLine("Type commands like: AN15JUNDACBKK, NM1RAHIM/MR, SS1Y1, TTP", 'info');
-    printLine("Available: AN, NM, AP, TK, SS, XE, RT, RF, TTP, IG, IR", 'info');
-    printLine("");
+// Input handling
+input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const cmd = this.value.trim();
+        if (cmd) {
+            handleCommand(cmd);
+        }
+        this.value = '';
+    }
     
-    loadFromLocalStorage();
-    printLine(`ACTIVE PNR: ${currentPNR.locator}`, 'success');
-    
-    setTimeout(() => {
-        printLine("Session ready. Enter commands below.", 'info');
-    }, 300);
-}
-
-function setupInput() {
-    inputField.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            const command = this.value.trim();
-            if (command) {
-                parseCommand(command);
-                sessionHistory.push(command);
-            }
+    // History navigation
+    else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (commandHistory.length > 0) {
+            historyIndex = Math.min(historyIndex + 1, commandHistory.length - 1);
+            this.value = commandHistory[historyIndex];
+        }
+    }
+    else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (historyIndex > 0) {
+            historyIndex--;
+            this.value = commandHistory[historyIndex];
+        } else {
+            historyIndex = -1;
             this.value = '';
         }
-    });
-}
-
-document.addEventListener('click', () => {
-    inputField.focus();
+    }
 });
 
-function startSimulator() {
-    updateClock();
-    setInterval(updateClock, 1000);
-    
-    initTerminal();
-    setupInput();
-    
-    setTimeout(() => {
-        inputField.focus();
-    }, 500);
-    
-    if (currentPNR.passengers.length === 0) {
-        currentPNR.passengers.push({ name: "RAHIM/MR", type: "ADT" });
-        currentPNR.segments.push({
-            airline: "BG",
-            flightNo: "147",
-            from: "DAC",
-            to: "BKK",
-            dep: "23:45",
-            arr: "05:30",
-            cabin: "Y"
-        });
-    }
+// Auto focus
+setTimeout(() => {
+    input.focus();
+}, 500);
+
+// Clock
+function updateClock() {
+    const timeEl = document.getElementById('current-time');
+    setInterval(() => {
+        const now = new Date();
+        timeEl.textContent = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) + 'Z';
+    }, 1000);
 }
 
-window.onload = startSimulator;
+// Initialize
+function init() {
+    initState();
+    clearTerminal();
+    updateClock();
+    
+    // Welcome message
+    printLine('WELCOME TO AMADEUS GDS TRAINING ENVIRONMENT', '#00ff88');
+    printLine('SIMULATOR READY. TYPE HELP FOR COMMANDS.', '#66ff66');
+    printLine('');
+}
+
+// Start
+init();

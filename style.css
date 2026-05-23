@@ -7,71 +7,48 @@
 body {
     background: #000;
     color: #00ff00;
-    font-family: 'Courier New', monospace;
+    font-family: 'Courier New', Courier, monospace;
     overflow: hidden;
     height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
-.terminal {
+.terminal-container {
     width: 100%;
-    max-width: 1100px;
-    height: 95vh;
-    background: #000;
-    border: 3px solid #00cc00;
-    box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    background: #000;
+    border: 2px solid #00ff00;
 }
 
 .terminal-header {
     background: #001100;
     padding: 8px 15px;
-    border-bottom: 2px solid #00cc00;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 1px solid #00ff00;
     font-size: 14px;
 }
 
 .header-left {
     display: flex;
-    align-items: center;
-    gap: 15px;
+    gap: 20px;
 }
 
 .title {
     color: #00ff88;
     font-weight: bold;
-    letter-spacing: 1px;
 }
 
-.version {
-    color: #00cc66;
-    font-size: 12px;
+.status {
+    color: #ffff00;
 }
 
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.pdf-btn {
-    background: #003300;
-    color: #00ff00;
-    border: 1px solid #00cc00;
-    padding: 4px 12px;
-    font-family: 'Courier New', monospace;
-    cursor: pointer;
-    font-size: 13px;
-}
-
-.pdf-btn:hover {
-    background: #005500;
+#current-time {
+    color: #88ff88;
 }
 
 .terminal-output {
@@ -80,69 +57,81 @@ body {
     overflow-y: auto;
     line-height: 1.4;
     font-size: 15px;
+    white-space: pre-wrap;
     background: #000000;
-    color: #00ff44;
 }
 
-.terminal-output::-webkit-scrollbar {
-    width: 8px;
-}
-
-.terminal-output::-webkit-scrollbar-thumb {
-    background: #00aa33;
-}
-
-.terminal-input {
+.terminal-input-area {
     display: flex;
     align-items: center;
-    padding: 10px 15px;
+    padding: 8px 15px;
     background: #001100;
-    border-top: 2px solid #00cc00;
-    font-size: 16px;
+    border-top: 1px solid #00ff00;
 }
 
 .prompt {
-    color: #00ff88;
+    color: #00ff00;
     margin-right: 8px;
-    font-weight: bold;
 }
 
-#command-input {
+.command-input {
     flex: 1;
     background: transparent;
     border: none;
+    color: #00ff00;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 15px;
     outline: none;
-    color: #00ff44;
-    font-family: 'Courier New', monospace;
-    font-size: 16px;
 }
 
 .cursor {
-    animation: blink 0.8s step-end infinite;
-    color: #00ff88;
+    animation: blink 1s step-start infinite;
+    color: #00ff00;
 }
 
 @keyframes blink {
     50% { opacity: 0; }
 }
 
-/* Command output styles */
-.output-line {
-    margin-bottom: 6px;
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #001100;
+    padding: 8px 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 13px;
+    border-top: 1px solid #00ff00;
+    z-index: 100;
 }
 
-.success {
-    color: #00ff88;
+.pdf-btn, .clear-btn {
+    background: #003300;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
 }
 
-.error {
-    color: #ff4444;
+.pdf-btn:hover, .clear-btn:hover {
+    background: #006600;
 }
 
-.info {
-    color: #44aaff;
+.help-text {
+    margin-left: auto;
+    color: #66ff66;
+    font-size: 12px;
 }
 
-.flight-line {
-    color: #ffff88;
+/* Scrollbar styling */
+.terminal-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.terminal-output::-webkit-scrollbar-thumb {
+    background: #00aa00;
 }
