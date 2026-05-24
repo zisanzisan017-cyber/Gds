@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDS Training Simulator - Professional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        body { font-family: 'VT323', monospace; }
+        .terminal {
+            background: #0a0a0a;
+            color: #00ff41;
+            font-size: 19px;
+            line-height: 1.4;
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.5);
+        }
+        .cursor { animation: blink 0.7s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .scanline {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(transparent 50%, rgba(0,255,65,0.06) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            animation: scan 8s linear infinite;
+        }
+        @keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(300%); } }
+    </style>
+</head>
+<body class="bg-zinc-950 text-green-400 overflow-hidden">
+
+    <!-- Download Button -->
+    <div class="fixed top-4 right-4 z-50">
+        <button onclick="downloadFile()" 
+                class="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-black px-6 py-3 rounded-xl font-bold shadow-xl">
+            <i class="fas fa-download"></i> 
+            ডাউনলোড করুন
+        </button>
+    </div>
+
+    <!-- Login -->
+    <div id="login-screen" class="fixed inset-0 bg-black flex items-center justify-center z-50">
+        <div class="max-w-md w-full bg-zinc-900 border-2 border-green-500 p-10 text-center">
+            <h1 class="text-5xl mb-3">✈️</h1>
+            <h1 class="text-3xl tracking-widest mb-1">GDS SIMULATOR</h1>
+            <p class="text-green-400/80 mb-8">Amadeus • Sabre Style Training</p>
+            
+            <input id="username" value="trainee" class="w-full p-5 bg-black border border-green-500 text-xl mb-4">
+            <input id="password" type="password" value="123456" class="w-full p-5 bg-black border border-green-500 text-xl mb-6">
+            
+            <button onclick="login()" class="w-full py-6 bg-green-600 hover:bg-green-500 text-black text-2xl font-bold">
+                SIGN IN TO SYSTEM
+            </button>
+            <p class="text-xs mt-6 text-green-400/60">Demo Account: trainee / 123456</p>
+        </div>
+    </div>
+
+    <!-- Terminal -->
+    <div id="main-terminal" class="hidden h-screen flex flex-col">
+        <div class="bg-zinc-900 border-b border-green-500 p-3 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <span class="text-amber-400">GDS TRAINING v2.2</span>
+                <span id="agent-name" class="text-green-400"></span>
+            </div>
+            <div onclick="logout()" class="cursor-pointer hover:text-red-400">SIGN OFF</div>
+        </div>
+        
+        <div class="flex-1 relative terminal overflow-auto p-6" id="terminal-output"></div>
+        <div class="scanline"></div>
+        
+        <div class="bg-black p-4 border-t border-green-500">
+            <input id="command-input" type="text" 
+                   class="w-full bg-transparent outline-none text-green-400 text-xl placeholder-green-700"
+                   placeholder="কমান্ড লিখুন এখানে...">
+        </div>
+    </div>
+
+    <script>
+        let currentPNR = null;
+        let itinerary = [];
+
+        function downloadFile() {
+            const content = document.documentElement.outerHTML;
+            const blob = new Blob([content], { type: "text/html" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "GDS-Training-Simulator-Pro.html";
+            link.click();
+        }
+
+        function login() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-terminal').classList.remove('hidden');
+            document.getElementById('agent-name').textContent = "TRAINEE";
+            initTerminal();
+        }
+
+        function logout() {
+            if (confirm("সিমুলেটর থেকে বের হতে চান?")) location.reload();
+        }
+
+        const output = document.getElementById('terminal-output');
+        const input = document.getElementById('command-input');
+
+        function print(text, color = 'green') {
+            const line = document.createElement('div');
+            if (color === 'cyan') line.style.color = '#00ffff';
+            if (color === 'amber') line.style.color = '#ffcc00';
+            line.textContent = text;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function initTerminal() {
+            output.innerHTML = '';
+            print("═══════════════════════════════════════════════", "cyan");
+            print("     PROFESSIONAL GDS TRAINING SIMULATOR", "cyan");
+            print("     Educational Use Only - Simulated Data", "cyan");
+            print("═══════════════════════════════════════════════", "cyan");
+            print("");
+            print("Welcome, TRAINEE. Type HE for commands.", "amber");
+            print("");
+        }
+
+        function processCommand(cmd) {
+            cmd = cmd.trim().toUpperCase();
+            print("> " + cmd, "amber");
+
+            if (cmd === "HE" || cmd === "HELP") {
+                print("AN25JULDACDXB   → Availability Search", "cyan");
+                print("SS1Y1           → Sell Seat (Line 1, Class Y)", "cyan");
+                print("ER              → End Transaction & Create PNR", "cyan");
+                print("RT              → Retrieve Current PNR", "cyan");
+                print("TTP             → Issue Ticket", "cyan");
+                print("CLEAR           → Clear Screen", "cyan");
+            } 
+            else if (cmd.startsWith("AN")) {
+                print("AVAILABILITY - 25 JUL 2026 DAC → DXB", "cyan");
+                print("1 EK585  Y9 K9 M8 B7 H6  1940 2245  77W  0", "cyan");
+                print("2 QR641  Y8 K7 M6 B5 H4  0315 0540  359  0", "cyan");
+                print("3 TK713  Y7 K6 M5 B4 H3  0600 1145  333  1", "cyan");
+                print("SS1Y1 টাইপ করে সিট বুক করুন");
+            } 
+            else if (cmd.startsWith("SS")) {
+                itinerary.push({flight: "EK585", class: "Y"});
+                print("✓ SEAT SOLD SUCCESSFULLY", "cyan");
+            } 
+            else if (cmd === "ER") {
+                if (itinerary.length > 0) {
+                    currentPNR = "H" + Math.random().toString(36).substring(2,8).toUpperCase();
+                    print(`PNR CREATED: ${currentPNR}`, "cyan");
+                    print("Passenger: RAHMAN/AMIN");
+                } else {
+                    print("No itinerary to save!", "amber");
+                }
+            } 
+            else if (cmd === "RT") {
+                if (currentPNR) {
+                    print(`PNR DISPLAY: ${currentPNR}`, "cyan");
+                    print("1. RAHMAN/AMIN MR");
+                    print("EK585 DAC DXB 25JUL26 Y HK1");
+                } else print("No active PNR.", "amber");
+            } 
+            else if (cmd === "TTP") {
+                if (currentPNR) {
+                    print("TICKET ISSUED SUCCESSFULLY!", "cyan");
+                    print(`Ticket Number: 157${Math.floor(Math.random()*9000000000 + 1000000000)}`);
+                } else {
+                    print("Please create PNR first (ER)", "amber");
+                }
+            } 
+            else if (cmd === "CLEAR") {
+                output.innerHTML = '';
+            } 
+            else {
+                print("Command not recognized. Type HE for help.", "amber");
+            }
+        }
+
+        input.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                if (input.value.trim() !== "") {
+                    processCommand(input.value);
+                    input.value = "";
+                }
+            }
+        });
+
+        // Auto focus on load
+        window.onload = () => {
+            setTimeout(() => document.getElementById('username').focus(), 500);
+        };
+    </script>
+</body>
+</html>
